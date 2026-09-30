@@ -99,7 +99,7 @@ Once the build finishes successfully (and the `game/bin/chess_engine.dll` is cre
 ---
 
 ## 📜 Credits & Assets
-- **Programming & Design:** [Your Name/Handle]
+- **Programming & Design:** Tal Schneider and Ariel Prace
 - **3D Chess Pieces:** Generated with polyy.ai ("3D Chess Pieces Pack") - [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)
 - **Built with:** [Godot Engine](https://godotengine.org) & [godot-cpp](https://github.com/godotengine/godot-cpp)
 
