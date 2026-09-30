@@ -8,11 +8,7 @@
 [![C++](https://img.shields.io/badge/C++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)](https://cplusplus.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-*Screenshots coming soon...*
-<!-- 
-  Add a hero image here:
-  ![Hero Screenshot](docs/hero_screenshot.png) 
--->
+![Hero Screenshot](images/epic_view.png)
 
 </div>
 
@@ -35,15 +31,13 @@ Whether you want to play a local match against a friend or test your skills agai
 
 ## 📸 Screenshots
 
-*(Replace these placeholders with actual screenshots from your game!)*
-
 <p align="center">
-  <img src="https://via.placeholder.com/400x225.png?text=Main+Menu" width="48%">
-  <img src="https://via.placeholder.com/400x225.png?text=In-Game+Board" width="48%">
+  <img src="images/main_menu.png" width="48%">
+  <img src="images/step_guide.png" width="48%">
 </p>
 <p align="center">
-  <img src="https://via.placeholder.com/400x225.png?text=Checkmate+Screen" width="48%">
-  <img src="https://via.placeholder.com/400x225.png?text=Dynamic+Camera+POV" width="48%">
+  <img src="images/checkmate.png" width="48%">
+  <img src="images/choose_your_side.png" width="48%">
 </p>
 
 ---
