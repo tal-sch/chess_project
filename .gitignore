@@ -1,0 +1,28 @@
+# Godot-specific ignores
+.godot/
+*.import
+*.translation
+*.gdignore
+export_presets.cfg
+export.cfg
+
+# Compiled C++ and build artifacts
+build/
+bin/
+obj/
+*.obj
+*.dll
+*.exe
+*.lib
+*.exp
+*.pdb
+.sconsign.dblite
+
+# IDEs and Editors
+.vscode/
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.idea/
