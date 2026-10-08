@@ -3,6 +3,7 @@
 # Grandmaster: A C++/Godot Chess Game
 
 **A modern, visually stunning 3D Chess game powered by a custom C++ engine and rendered in Godot 4.**
+
 **Developed by Tal Schneider & Ariel Prace**
 
 [![Godot Engine](https://img.shields.io/badge/Godot_4.3-%23FFFFFF.svg?style=for-the-badge&logo=godotEngine)](https://godotengine.org)
@@ -13,25 +14,22 @@
 
 </div>
 
----
-
 ## Overview
 
-**Grandmaster** is a fully functional, high-performance 3D chess game.
-Whether you want to play a local match against a friend or test your skills against the built-in Minimax AI, the game provides a premium, responsive, and cinematic experience.
+**Grandmaster** is a fully functional, high-performance 3D chess game.  
+Whether you want to play a local match against a friend or test your skills against the built-in AI, the game provides a premium, responsive, and cinematic experience.
 
----
 
 ### Key Features
+
 - **High Performance:** Move generation, validation, and AI logic are completely handled by a compiled C++ core, ensuring lightning-fast evaluations.
 - **Two Game Modes:** Play against a friend locally, or against the computer across 3 difficulty levels (Easy, Medium, Hard).
 - **Cinematic 3D Visuals:** A sleek, dark-themed 3D environment with procedural marble/obsidian materials, ambient lighting, and smooth camera interpolations.
 
----
 
 ## Architecture
 
-The project combines the raw computational speed of a custom-built **C++ Backend** with the visual polish and modern rendering capabilities of **Godot Engine**.
+The project combines the raw computational speed of a custom-built **C++ Backend** with the visual polish and modern rendering capabilities of **Godot Engine**.  
 It is split into three modules:
 
 1. **Backend (C++)**: 
@@ -44,7 +42,6 @@ It is split into three modules:
    - Contains all the visual assets, UI (HUD, Main Menu), audio, and the 3D scene (`main.tscn`).
    - Handles mouse raycasting, animations, and camera logic.
 
----
 
 ## Screenshots
 
@@ -57,7 +54,13 @@ It is split into three modules:
   <img src="images/choose_your_side.png" width="48%">
 </p>
 
----
+
+## Summary
+
+This project served two main purposes:
+
+1. **Experience in software design**: We designed and developed a chess engine from the ground up.
+2. **Introduction to game development and 3D graphics**: We now have basic knowledge about how modern computer graphic frameworks work and their usage in game development pipelines.
 
 ## Installation & Build
 
@@ -83,21 +86,19 @@ Open your terminal in the project root and run SCons to compile the extension.
 ```bash
 python -m SCons gdextension
 ```
-*Note: Make sure the Godot Editor is closed while building, as Windows will lock the `.dll` file if the game is open!*
+*Note: Make sure the Godot Editor is closed while building, as Windows will lock the `.dll` file if the game is open.*
 
 ### 3. Run the Game
-Once the build finishes successfully (and the `game/bin/chess_engine.dll` is created), simply open the `game/project.godot` file using the Godot Editor and hit **Play (F5)**!
+Once the build finishes successfully (and the `game/bin/chess_engine.dll` is created), simply open the `game/project.godot` file using the Godot Editor and hit **Play (F5)**.
 
----
 
 ## How to Play
 
 - **Left Click:** Select a piece to see its valid moves, then click a highlighted square to move it.
 - **Right Click & Drag:** Freely rotate the 3D camera around the board.
 - **Scroll Wheel:** Zoom the camera in and out.
-- **Main Menu:** Choose between PvP or Play vs Bot (Easy, Medium, Hard). Select your side (White or Black) and the camera will automatically orient itself to your perspective!
+- **Main Menu:** Choose between PvP or Play vs Bot (Easy, Medium, Hard). Select your side (White or Black) and the camera will automatically orient itself to your perspective.
 
----
 
 ## Credits & Assets
 - **Programming & Design:** Tal Schneider and Ariel Prace
