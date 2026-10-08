@@ -90,7 +90,7 @@ func _ready():
 	# Right area (History & buttons)
 	var right_panel = PanelContainer.new()
 	right_panel.name = "RightPanel"
-	right_panel.custom_minimum_size = Vector2(220, 0)
+	right_panel.custom_minimum_size = Vector2(160, 0)
 	
 	var right_style = StyleBoxFlat.new()
 	right_style.bg_color = Color(0.08, 0.08, 0.1, 0.7)
@@ -155,12 +155,11 @@ func _ready():
 	newgame_btn.custom_minimum_size = Vector2(0, 36)
 	newgame_btn.pressed.connect(_on_newgame_pressed)
 	btn_vbox.add_child(newgame_btn)
-	
-	var resign_btn = Button.new()
-	resign_btn.text = "RESIGN"
-	resign_btn.custom_minimum_size = Vector2(0, 36)
-	resign_btn.pressed.connect(_on_resign_pressed)
-	btn_vbox.add_child(resign_btn)
+	var main_menu_btn = Button.new()
+	main_menu_btn.text = "MAIN MENU"
+	main_menu_btn.custom_minimum_size = Vector2(0, 36)
+	main_menu_btn.pressed.connect(_on_main_menu_pressed)
+	btn_vbox.add_child(main_menu_btn)
 
 	_setup_game_over_panel()
 	_setup_color_selection_panel()
@@ -404,14 +403,6 @@ func _on_newgame_pressed():
 	game_manager.start_new_game(game_manager.play_mode, game_manager.player_color)
 	history_list.clear()
 
-func _on_resign_pressed():
-	if game_over_overlay:
-		game_over_overlay.visible = false
-	captured_pieces.clear()
-	captured_label.text = ""
-	game_manager.start_new_game(game_manager.play_mode, game_manager.player_color)
-	history_list.clear()
-
 func _on_main_menu_pressed():
 	if game_over_overlay:
 		game_over_overlay.visible = false
@@ -431,6 +422,7 @@ func _on_main_menu_pressed():
 		alpha_tween.tween_property(main_hbox, "modulate:a", 0.0, 0.2)
 		alpha_tween.tween_callback(func(): 
 			self.visible = false
+			game_manager.play_mode = 0
 			game_manager.main_menu.visible = true
 			game_manager.main_menu.modulate.a = 0.0
 			var menu_tween = create_tween()
