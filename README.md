@@ -16,7 +16,8 @@
 
 ## Overview
 
-**Grandmaster** is a fully functional, high-performance 3D chess game.  
+**Grandmaster** is a fully functional, high-performance 3D chess game.
+
 Whether you want to play a local match against a friend or test your skills against the built-in AI, the game provides a premium, responsive, and cinematic experience.
 
 
@@ -42,6 +43,9 @@ It is split into three modules:
    - Contains all the visual assets, UI (HUD, Main Menu), audio, and the 3D scene (`main.tscn`).
    - Handles mouse raycasting, animations, and camera logic.
 
+### Backend Design
+
+![UML](images/ChessUML.svg)
 
 ## Screenshots
 
