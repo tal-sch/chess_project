@@ -8,7 +8,7 @@ export.cfg
 
 # Compiled C++ and build artifacts
 build/
-bin/
+/bin/
 obj/
 *.obj
 *.dll
