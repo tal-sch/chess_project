@@ -1,8 +1,9 @@
 <div align="center">
   
-# ♟️ Grandmaster: C++ / Godot Chess Engine
+# Grandmaster: A C++/Godot Chess Game
 
 **A modern, visually stunning 3D Chess game powered by a custom C++ engine and rendered in Godot 4.**
+**Developed by Tal Schneider & Ariel Prace**
 
 [![Godot Engine](https://img.shields.io/badge/Godot_4.3-%23FFFFFF.svg?style=for-the-badge&logo=godotEngine)](https://godotengine.org)
 [![C++](https://img.shields.io/badge/C++-%2300599C.svg?style=for-the-badge&logo=c%2B%2B&logoColor=white)](https://cplusplus.com/)
@@ -14,22 +15,38 @@
 
 ---
 
-## 🌟 Overview
+## Overview
 
-**Grandmaster** is a fully functional, high-performance 3D chess game. It combines the raw computational speed of a custom-built **C++ Backend** with the visual polish and modern rendering capabilities of **Godot 4**. 
-
+**Grandmaster** is a fully functional, high-performance 3D chess game.
 Whether you want to play a local match against a friend or test your skills against the built-in Minimax AI, the game provides a premium, responsive, and cinematic experience.
-
-### ✨ Key Features
-- **High-Performance C++ Engine:** Move generation, validation, and AI logic are completely handled by a compiled C++ core, ensuring lightning-fast evaluations.
-- **Minimax AI Bot:** Play against the computer across 3 difficulty levels (Easy, Medium, Hard).
-- **Cinematic 3D Visuals:** A sleek, dark-themed 3D environment with procedural marble/obsidian materials, ambient lighting, and smooth camera interpolations.
-- **Dynamic Camera POV:** The camera elegantly swoops across the board depending on which color you choose to play.
-- **GDExtension Integration:** The C++ backend communicates seamlessly with Godot via a native GDExtension `.dll`, providing maximum performance without the overhead of GDScript.
 
 ---
 
-## 📸 Screenshots
+### Key Features
+- **High Performance:** Move generation, validation, and AI logic are completely handled by a compiled C++ core, ensuring lightning-fast evaluations.
+- **Two Game Modes:** Play against a friend locally, or against the computer across 3 difficulty levels (Easy, Medium, Hard).
+- **Cinematic 3D Visuals:** A sleek, dark-themed 3D environment with procedural marble/obsidian materials, ambient lighting, and smooth camera interpolations.
+
+---
+
+## Architecture
+
+The project combines the raw computational speed of a custom-built **C++ Backend** with the visual polish and modern rendering capabilities of **Godot Engine**.
+It is split into three modules:
+
+1. **Backend (C++)**: 
+   - Contains the core chess logic (`Board`, `Piece`, `Move`, `Game`, `Square`).
+   - Implements the `Bot` class, utilizing a Minimax algorithm with Alpha-Beta pruning and material evaluation.
+   - Unit-tested using `doctest`.
+2. **Bridge (C++)**: 
+   - The GDExtension wrapper (`chess_engine.cpp`) that binds the C++ logic to Godot, exposing methods like `play` and `possibleMoves` to GDScript.
+3. **Frontend (Godot 4/GDScript)**: 
+   - Contains all the visual assets, UI (HUD, Main Menu), audio, and the 3D scene (`main.tscn`).
+   - Handles mouse raycasting, animations, and camera logic.
+
+---
+
+## Screenshots
 
 <p align="center">
   <img src="images/main_menu.png" width="48%">
@@ -42,23 +59,7 @@ Whether you want to play a local match against a friend or test your skills agai
 
 ---
 
-## 🏗️ Technical Architecture
-
-The project is split into two distinct layers that communicate via `godot-cpp`:
-
-1. **`backend/` (C++)**: 
-   - Contains the core chess logic (`Board`, `Piece`, `Move`, `Game`, `Square`).
-   - Implements the `Bot` class, utilizing a Minimax algorithm with Alpha-Beta pruning and material evaluation.
-   - 100% engine-agnostic and unit-tested using `doctest`.
-2. **`bridge/` (C++)**: 
-   - The GDExtension wrapper (`chess_engine.cpp`) that binds the C++ logic to Godot, exposing methods like `play_move` and `get_legal_moves` to GDScript.
-3. **`game/` (Godot 4)**: 
-   - Contains all the visual assets, UI (HUD, Main Menu), audio, and the 3D scene (`main.tscn`).
-   - Handles mouse raycasting, animations, and camera logic entirely in GDScript.
-
----
-
-## 🚀 Installation & Build Guide
+## Installation & Build
 
 Because this project relies on a compiled C++ extension, you will need to build the native binaries before opening the game in Godot.
 
@@ -89,7 +90,7 @@ Once the build finishes successfully (and the `game/bin/chess_engine.dll` is cre
 
 ---
 
-## 🎮 How to Play
+## How to Play
 
 - **Left Click:** Select a piece to see its valid moves, then click a highlighted square to move it.
 - **Right Click & Drag:** Freely rotate the 3D camera around the board.
@@ -98,13 +99,7 @@ Once the build finishes successfully (and the `game/bin/chess_engine.dll` is cre
 
 ---
 
-## 📜 Credits & Assets
+## Credits & Assets
 - **Programming & Design:** Tal Schneider and Ariel Prace
 - **3D Chess Pieces:** Generated with polyy.ai ("3D Chess Pieces Pack") - [CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/)
 - **Built with:** [Godot Engine](https://godotengine.org) & [godot-cpp](https://github.com/godotengine/godot-cpp)
-
----
-
-<div align="center">
-  <i>If you found this project interesting, feel free to leave a ⭐ on the repository!</i>
-</div>
