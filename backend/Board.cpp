@@ -72,18 +72,42 @@ void Board::makeMove(const Move& m)
 		return;
 
 	_moveHistory.push(m);
-
-	if (m.type() == MoveType::Castling)
-	{
-		handleCastling(m);
-		return;
-	}
+	_castlingRightsHistory.push(_castlingRights);
 
 	Square src = m.src(), dst = m.dst();
 	const PieceColor COLOR = at(src)->color();
 	const MoveType TYPE = m.type();
 
-	if (TYPE == MoveType::Capture) _capturedPieces.push(std::move(at(dst)));
+	// Update castling rights
+	if (src == Square("e1")) _castlingRights.whiteKingMoved = true;
+	if (src == Square("e8")) _castlingRights.blackKingMoved = true;
+	if (src == Square("a1") || dst == Square("a1")) _castlingRights.whiteLeftRookMoved = true;
+	if (src == Square("h1") || dst == Square("h1")) _castlingRights.whiteRightRookMoved = true;
+	if (src == Square("a8") || dst == Square("a8")) _castlingRights.blackLeftRookMoved = true;
+	if (src == Square("h8") || dst == Square("h8")) _castlingRights.blackRightRookMoved = true;
+
+	if (TYPE == MoveType::Castling)
+	{
+		_captureHistory.push(false);
+		handleCastling(m);
+		return;
+	}
+
+	if (TYPE == MoveType::EnPassant)
+	{
+		_captureHistory.push(true);
+		_capturedPieces.push(std::move(at(COLOR ? dst.below() : dst.above())));
+	}
+	else if (at(dst))
+	{
+		_captureHistory.push(true);
+		_capturedPieces.push(std::move(at(dst)));
+	}
+	else
+	{
+		_captureHistory.push(false);
+	}
+
 	at(dst) = std::move(at(src));
 
 	auto& piece = at(dst);
@@ -97,10 +121,6 @@ void Board::makeMove(const Move& m)
 	{
 		piece = std::unique_ptr<Piece>(new Queen(COLOR));
 	}
-	else if (TYPE == MoveType::EnPassant)
-	{
-		_capturedPieces.push(std::move(at(COLOR ? dst.below() : dst.above())));
-	}
 }
 
 void Board::undoLastMove()
@@ -110,6 +130,12 @@ void Board::undoLastMove()
 
 	Move m = _moveHistory.top();
 	_moveHistory.pop();
+
+	_castlingRights = _castlingRightsHistory.top();
+	_castlingRightsHistory.pop();
+
+	bool wasCaptured = _captureHistory.top();
+	_captureHistory.pop();
 
 	if (m.type() == MoveType::Castling)
 	{
@@ -123,9 +149,16 @@ void Board::undoLastMove()
 
 	at(src) = std::move(at(dst));
 
-	if (TYPE == MoveType::Capture)
+	if (wasCaptured)
 	{
-		at(dst) = std::move(_capturedPieces.top());
+		if (TYPE == MoveType::EnPassant)
+		{
+			at(COLOR ? dst.below() : dst.above()) = std::move(_capturedPieces.top());
+		}
+		else
+		{
+			at(dst) = std::move(_capturedPieces.top());
+		}
 		_capturedPieces.pop();
 	}
 
@@ -139,11 +172,6 @@ void Board::undoLastMove()
 	else if (TYPE == MoveType::Promotion)
 	{
 		piece = std::unique_ptr<Piece>(new Pawn(COLOR));
-	}
-	else if (TYPE == MoveType::EnPassant)
-	{
-		at(COLOR ? dst.below() : dst.above()) = std::move(_capturedPieces.top());
-		_capturedPieces.pop();
 	}
 }
 
@@ -164,18 +192,100 @@ MoveList Board::possibleMoves(const Square& s) const
 bool Board::check(PieceColor color) const
 {
 	const Square& king = color ? _whiteKing : _blackKing;
-	MoveList moves;
+	return isAttacked(king, !color);
+}
 
-	for (size_t i = 0; i < _board.size(); ++i)
+bool Board::isAttacked(const Square& sq, PieceColor byColor) const
+{
+	for (size_t r = 0; r < _board.size(); ++r)
 	{
-		for (size_t j = 0; j < _board[i].size(); ++j)
+		for (size_t f = 0; f < _board[r].size(); ++f)
 		{
-			if (_board[i][j] && _board[i][j]->color() != color &&
-				validMove(Square(i, j), king))
+			const auto& piece = _board[r][f];
+			if (!piece || piece->color() != byColor)
+				continue;
+
+			Square src(r, f);
+			if (piece->type() == PieceType::Pawn)
 			{
-				return true;
+				Square leftDiag = byColor ? src.top_left() : src.bottom_left();
+				Square rightDiag = byColor ? src.top_right() : src.bottom_right();
+				if ((leftDiag && leftDiag == sq) || (rightDiag && rightDiag == sq))
+					return true;
+			}
+			else if (piece->type() == PieceType::King)
+			{
+				int dr = std::abs(static_cast<int>(src.rank()) - static_cast<int>(sq.rank()));
+				int df = std::abs(static_cast<int>(src.file()) - static_cast<int>(sq.file()));
+				if (dr <= 1 && df <= 1 && (dr + df > 0))
+					return true;
+			}
+			else
+			{
+				if (validMove(src, sq))
+					return true;
 			}
 		}
+	}
+	return false;
+}
+
+bool Board::isInsufficientMaterial() const
+{
+	int whiteKnights = 0, whiteBishops = 0;
+	int blackKnights = 0, blackBishops = 0;
+	int whiteBishopSquareColor = -1; // 0 = dark, 1 = light
+	int blackBishopSquareColor = -1;
+
+	for (size_t r = 0; r < _board.size(); ++r)
+	{
+		for (size_t f = 0; f < _board[r].size(); ++f)
+		{
+			const auto& piece = _board[r][f];
+			if (!piece) continue;
+
+			if (piece->type() == PieceType::Pawn ||
+				piece->type() == PieceType::Rook ||
+				piece->type() == PieceType::Queen)
+			{
+				return false; // Pawns, rooks, queens can checkmate
+			}
+
+			if (piece->type() == PieceType::Knight)
+			{
+				if (piece->color() == WhitePiece) whiteKnights++;
+				else blackKnights++;
+			}
+			else if (piece->type() == PieceType::Bishop)
+			{
+				int sqColor = static_cast<int>((r + f) % 2);
+				if (piece->color() == WhitePiece)
+				{
+					whiteBishops++;
+					whiteBishopSquareColor = sqColor;
+				}
+				else
+				{
+					blackBishops++;
+					blackBishopSquareColor = sqColor;
+				}
+			}
+		}
+	}
+
+	int whiteMinors = whiteKnights + whiteBishops;
+	int blackMinors = blackKnights + blackBishops;
+
+	// King vs King
+	if (whiteMinors == 0 && blackMinors == 0) return true;
+
+	// King + Minor vs King
+	if ((whiteMinors == 1 && blackMinors == 0) || (whiteMinors == 0 && blackMinors == 1)) return true;
+
+	// King + Bishop vs King + Bishop (same color squares)
+	if (whiteKnights == 0 && blackKnights == 0 && whiteBishops == 1 && blackBishops == 1)
+	{
+		if (whiteBishopSquareColor == blackBishopSquareColor) return true;
 	}
 
 	return false;
@@ -246,19 +356,19 @@ MoveList Board::generatePawnMoves(const Square& s) const
 	Square right = (s.*pGetRightCapture)();
 
 	if (left && at(left) && at(left)->color() != COLOR)
-		moves.push_back(Move(s, left, MoveType::Capture));
+		moves.push_back(Move(s, left, s.rank() == OPPOSITE_START ? MoveType::Promotion : MoveType::Capture));
 
 	if (right && at(right) && at(right)->color() != COLOR)
-		moves.push_back(Move(s, right, MoveType::Capture));
+		moves.push_back(Move(s, right, s.rank() == OPPOSITE_START ? MoveType::Promotion : MoveType::Capture));
 
-	if (s.rank() == EN_PASSANT_RANK)
+	if (!_moveHistory.empty() && s.rank() == EN_PASSANT_RANK)
 	{
 		const Move& lastMove = _moveHistory.top();
 
 		if (lastMove.type() == MoveType::PawnDoubleStep &&
-			lastMove.dst() == s.left() || lastMove.dst() == s.right())
+			(lastMove.dst() == s.left() || lastMove.dst() == s.right()))
 		{
-			SquareGetter pGetCapture = lastMove.dst() == s.left() ? pGetLeftCapture : pGetRightCapture;
+			SquareGetter pGetCapture = (lastMove.dst() == s.left()) ? pGetLeftCapture : pGetRightCapture;
 			Move enPassant(s, (s.*pGetCapture)(), MoveType::EnPassant);
 			moves.push_back(enPassant);
 		}
@@ -340,8 +450,8 @@ MoveList Board::generateKingMoves(const Square& s) const
 
 	MoveList moves = generateMovesFromGetters(s, getters);
 
-	if (COLOR && !_castlingWhite && s == Square(WhiteKingOrigin) ||
-		!COLOR && !_castlingBlack && s == Square(BlackKingOrigin))
+	if ((COLOR && s == Square(WhiteKingOrigin)) ||
+		(!COLOR && s == Square(BlackKingOrigin)))
 	{
 		MoveList castlingMoves = generateCastlingMoves(COLOR);
 		moves.insert(moves.end(), castlingMoves.begin(), castlingMoves.end());
@@ -397,24 +507,50 @@ MoveList Board::generateCastlingMoves(PieceColor kingColor) const
 {
 	MoveList moves;
 
+	// King cannot castle out of check
+	if (check(kingColor))
+		return moves;
+
 	Square kingSqr = kingColor ? _whiteKing : _blackKing;
-	Square leftRook(kingSqr.rank(), LeftRookFile);
-	Square rightRook(kingSqr.rank(), RightRookFile);
+	size_t rank = kingSqr.rank();
+	PieceColor enemyColor = !kingColor;
 
-	if (at(leftRook) && at(leftRook)->type() == PieceType::Rook)
+	bool kingMoved = kingColor ? _castlingRights.whiteKingMoved : _castlingRights.blackKingMoved;
+	bool leftRookMoved = kingColor ? _castlingRights.whiteLeftRookMoved : _castlingRights.blackLeftRookMoved;
+	bool rightRookMoved = kingColor ? _castlingRights.whiteRightRookMoved : _castlingRights.blackRightRookMoved;
+
+	// Queenside (left rook)
+	if (!kingMoved && !leftRookMoved)
 	{
-		Square s1(leftRook.right()), s2(s1.right()), s3(s2.right());
-
-		if (!(at(s1) || at(s2) || at(s3)))
-			moves.push_back(Move(kingSqr, leftRook, MoveType::Castling));
+		Square leftRook(rank, LeftRookFile);
+		if (at(leftRook) && at(leftRook)->type() == PieceType::Rook && at(leftRook)->color() == kingColor)
+		{
+			Square b(rank, 1), c(rank, 2), d(rank, 3);
+			if (!at(b) && !at(c) && !at(d))
+			{
+				if (!isAttacked(d, enemyColor) && !isAttacked(c, enemyColor))
+				{
+					moves.push_back(Move(kingSqr, leftRook, MoveType::Castling));
+				}
+			}
+		}
 	}
 
-	if (at(rightRook) && at(rightRook)->type() == PieceType::Rook)
+	// Kingside (right rook)
+	if (!kingMoved && !rightRookMoved)
 	{
-		Square s1(rightRook.left()), s2(s1.left());
-
-		if (!(at(s1) || at(s2)))
-			moves.push_back(Move(kingSqr, rightRook, MoveType::Castling));
+		Square rightRook(rank, RightRookFile);
+		if (at(rightRook) && at(rightRook)->type() == PieceType::Rook && at(rightRook)->color() == kingColor)
+		{
+			Square f(rank, 5), g(rank, 6);
+			if (!at(f) && !at(g))
+			{
+				if (!isAttacked(f, enemyColor) && !isAttacked(g, enemyColor))
+				{
+					moves.push_back(Move(kingSqr, rightRook, MoveType::Castling));
+				}
+			}
+		}
 	}
 
 	return moves;
@@ -436,12 +572,10 @@ void Board::handleCastling(const Move& m)
 	if (COLOR)
 	{
 		_whiteKing = kingDst;
-		_castlingWhite = true;
 	}
 	else
 	{
 		_blackKing = kingDst;
-		_castlingBlack = true;
 	}
 }
 
@@ -450,7 +584,7 @@ void Board::undoCastling(const Move& m)
 	const size_t FILE = m.src().file();
 	const size_t RANK = m.src().rank();
 	const bool LEFT = m.dst().file() < FILE;
-	const PieceColor COLOR = !RANK;
+	const PieceColor COLOR = (RANK == 0);
 	
 	Square kingSqr = Square(RANK, LEFT ? FILE - 2 : FILE + 2);
 	Square rookSqr = LEFT ? kingSqr.right() : kingSqr.left();
@@ -463,11 +597,9 @@ void Board::undoCastling(const Move& m)
 	if (COLOR)
 	{
 		_whiteKing = kingDst;
-		_castlingWhite = false;
 	}
 	else
 	{
 		_blackKing = kingDst;
-		_castlingBlack = false;
 	}
 }

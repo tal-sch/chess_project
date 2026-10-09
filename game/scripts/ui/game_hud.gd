@@ -383,12 +383,28 @@ func _on_check_detected():
 	tween.tween_property(banner, "modulate:a", 1.0, 0.2)
 
 func _on_game_over(result: int):
-	# result == 8 means Checkmate
 	var engine = get_node_or_null("/root/ChessEngine")
 	var side = engine.get_side_to_move() if engine else 1
 	var winner = "Black" if side == 1 else "White" # If white is in checkmate, black wins
 	
-	game_over_subtitle.text = winner + " wins by Checkmate"
+	if result == 8:
+		game_over_title.text = "CHECKMATE"
+		game_over_subtitle.text = winner + " wins by Checkmate"
+	elif result == 12:
+		game_over_title.text = "STALEMATE"
+		game_over_subtitle.text = "Draw by Stalemate"
+	elif result == 13:
+		game_over_title.text = "DRAW"
+		game_over_subtitle.text = "Draw by Insufficient Material"
+	elif result == 14:
+		game_over_title.text = "DRAW"
+		game_over_subtitle.text = "Draw by Fifty-Move Rule"
+	elif result == 15:
+		game_over_title.text = "DRAW"
+		game_over_subtitle.text = "Draw by Threefold Repetition"
+	else:
+		game_over_title.text = "GAME OVER"
+		game_over_subtitle.text = "Game concluded"
 	
 	game_over_overlay.modulate.a = 0.0
 	game_over_overlay.visible = true

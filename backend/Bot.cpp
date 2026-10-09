@@ -23,7 +23,7 @@ MoveList Bot::getAllLegalMoves(Board& board, PieceColor color) const
 	{
 		for (int file = 0; file < chess_constants::Files; ++file)
 		{
-			Square sq(file, rank);
+			Square sq(rank, file);
 			const auto& piece = board[sq];
 
 			if (piece && piece->color() == color)
@@ -50,7 +50,7 @@ int Bot::evaluateBoard(const Board& board, PieceColor color) const
 	{
 		for (int file = 0; file < chess_constants::Files; ++file)
 		{
-			Square sq(file, rank);
+			Square sq(rank, file);
 			const auto& piece = board[sq];
 
 			if (piece)

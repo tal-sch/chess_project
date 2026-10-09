@@ -10,6 +10,11 @@ const std::array<Move, 4> Game::_castlingMoves {
     Move(Square("e8"), Square("h8"), MoveType::Castling)
 };
 
+Game::Game()
+{
+    _positionHistory.push_back(getBoardSignature());
+}
+
 MoveResult Game::play(const Square& src, const Square& dst)
 {
     if (!src || !dst)
@@ -33,6 +38,9 @@ MoveResult Game::play(const Square& src, const Square& dst)
         return MoveResult::IllegalMove;
 
     Move m = *it;
+    bool isPawnMove = (_board[src] && _board[src]->type() == PieceType::Pawn);
+    bool isCapture = (_board[dst] != nullptr) || (m.type() == MoveType::EnPassant);
+
     _board.makeMove(m);
     
     if (_board.check(_turn))
@@ -43,6 +51,38 @@ MoveResult Game::play(const Square& src, const Square& dst)
 
     _turn = !_turn;
 
+    // Fifty-move clock
+    if (isPawnMove || isCapture)
+        _halfMoveClock = 0;
+    else
+        _halfMoveClock++;
+
+    // Position history for threefold repetition
+    std::string sig = getBoardSignature();
+    _positionHistory.push_back(sig);
+    int repetitionCount = static_cast<int>(std::count(_positionHistory.begin(), _positionHistory.end(), sig));
+
+    // Check game over conditions: Checkmate or Stalemate
+    if (_board.checkMate(_turn))
+    {
+        if (_board.check(_turn))
+            return MoveResult::Checkmate;
+        else
+            return MoveResult::Stalemate;
+    }
+
+    if (repetitionCount >= 3)
+        return MoveResult::DrawRepetition;
+
+    if (_halfMoveClock >= 100)
+        return MoveResult::DrawFiftyMoves;
+
+    if (_board.isInsufficientMaterial())
+        return MoveResult::DrawInsufficientMaterial;
+
+    if (_board.check(_turn))
+        return MoveResult::Check;
+
     if (m.type() == MoveType::Promotion)
         return MoveResult::Promotion;
 
@@ -52,16 +92,43 @@ MoveResult Game::play(const Square& src, const Square& dst)
     if (m.type() == MoveType::EnPassant)
         return MoveResult::EnPassant;
 
-    if (_board.checkMate(_turn))
-        return MoveResult::Checkmate;
-
-    if (_board.check(_turn))
-        return MoveResult::Check;
-
     return MoveResult::Valid;
 }
 
 bool Game::possibleCastling(const Square& src, const Square& dst) const
 {
     return std::find(_castlingMoves.begin(), _castlingMoves.end(), Move(src, dst)) != _castlingMoves.end();
+}
+
+std::string Game::getBoardSignature() const
+{
+    std::string sig;
+    sig.reserve(66);
+    for (size_t r = 0; r < 8; ++r)
+    {
+        for (size_t f = 0; f < 8; ++f)
+        {
+            const auto& p = _board[Square(r, f)];
+            if (!p)
+            {
+                sig += '.';
+            }
+            else
+            {
+                char c = '?';
+                switch (p->type())
+                {
+                case PieceType::Pawn: c = 'p'; break;
+                case PieceType::Knight: c = 'n'; break;
+                case PieceType::Bishop: c = 'b'; break;
+                case PieceType::Rook: c = 'r'; break;
+                case PieceType::Queen: c = 'q'; break;
+                case PieceType::King: c = 'k'; break;
+                }
+                sig += (p->color() == chess_constants::WhitePiece) ? static_cast<char>(toupper(c)) : c;
+            }
+        }
+    }
+    sig += (_turn == chess_constants::WhitePiece ? 'w' : 'b');
+    return sig;
 }

@@ -104,8 +104,13 @@ func _raycast_square(mouse_pos: Vector2) -> String:
 	return sq
 
 func _handle_square_click(square: String):
+	# Block input if game is over
+	var hud = get_node_or_null("/root/Main/GameHUD")
+	if hud and hud.game_over_overlay and hud.game_over_overlay.visible:
+		return
+
 	# Block input if playing vs bot and it's the bot's turn
-	var gm = get_node("/root/Main/GameManager")
+	var gm = get_node_or_null("/root/Main/GameManager")
 	if gm and gm.play_mode > 0 and engine.get_side_to_move() == gm.bot_color:
 		return
 		

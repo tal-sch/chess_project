@@ -28,21 +28,33 @@ public:
 	bool check(PieceColor color) const;
 	bool checkMate(PieceColor color);
 	bool selfCheck(const Move& m);
+	bool isAttacked(const Square& sq, PieceColor byColor) const;
+	bool isInsufficientMaterial() const;
 
 private:
 	using MoveGenerator = MoveList(Board::*)(const Square&) const;
 	using SquareGetter = Square(Square::*)() const;
+
+	struct CastlingRights
+	{
+		bool whiteKingMoved = false;
+		bool blackKingMoved = false;
+		bool whiteLeftRookMoved = false;
+		bool whiteRightRookMoved = false;
+		bool blackLeftRookMoved = false;
+		bool blackRightRookMoved = false;
+	};
 
 	std::array<std::array<std::unique_ptr<Piece>, chess_constants::Files>, chess_constants::Ranks> _board;
 
 	Square _whiteKing = Square(chess_constants::WhiteKingOrigin);
 	Square _blackKing = Square(chess_constants::BlackKingOrigin);
 
-	bool _castlingWhite = false;
-	bool _castlingBlack = false;
-
+	CastlingRights _castlingRights;
+	std::stack<CastlingRights> _castlingRightsHistory;
 	std::stack<Move> _moveHistory;
 	std::stack<std::unique_ptr<Piece>> _capturedPieces;
+	std::stack<bool> _captureHistory;
 
 	static const std::array<MoveGenerator, 6> _generators;
 

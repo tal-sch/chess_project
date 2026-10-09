@@ -81,7 +81,7 @@ Because this project relies on a compiled C++ extension, you will need to build 
 ### 1. Clone the Repository
 Clone this repository and ensure you pull the `godot-cpp` submodule:
 ```bash
-git clone --recursive https://github.com/YOUR_USERNAME/chess_project.git
+git clone --recursive https://github.com/tal-sch/chess_project.git
 cd chess_project
 ```
 

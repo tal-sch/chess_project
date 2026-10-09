@@ -321,11 +321,61 @@ func _apply_material_to_meshes(node: Node, mat: Material):
 	for child in node.get_children():
 		_apply_material_to_meshes(child, mat)
 
+func _animate_piece_arc(piece: Node3D, target_pos: Vector3, on_complete: Callable = Callable()):
+	target_pos.y = piece.position.y
+	var mid_pos = (piece.position + target_pos) / 2.0
+	mid_pos.y += 0.8 # lift height
+	var tween = create_tween()
+	tween.tween_property(piece, "position", mid_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(piece, "position", target_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	if on_complete.is_valid():
+		tween.chain().tween_callback(on_complete)
+
 func move_piece_animated(from_sq: String, to_sq: String):
 	if not spawned_pieces.has(from_sq):
 		return
 		
 	var piece = spawned_pieces[from_sq]
+
+	# Special Case 1: Castling (King moves to corner rook square)
+	var is_castling = (from_sq == "e1" and (to_sq == "a1" or to_sq == "h1")) or \
+	                  (from_sq == "e8" and (to_sq == "a8" or to_sq == "h8"))
+	if is_castling and spawned_pieces.has(to_sq):
+		var king = piece
+		var rook = spawned_pieces[to_sq]
+		var king_dst = ""
+		var rook_dst = ""
+		if to_sq == "a1":
+			king_dst = "c1"; rook_dst = "d1"
+		elif to_sq == "h1":
+			king_dst = "g1"; rook_dst = "f1"
+		elif to_sq == "a8":
+			king_dst = "c8"; rook_dst = "d8"
+		elif to_sq == "h8":
+			king_dst = "g8"; rook_dst = "f8"
+
+		spawned_pieces.erase(from_sq)
+		spawned_pieces.erase(to_sq)
+		spawned_pieces[king_dst] = king
+		spawned_pieces[rook_dst] = rook
+
+		_animate_piece_arc(king, square_to_world(king_dst))
+		_animate_piece_arc(rook, square_to_world(rook_dst))
+		return
+
+	# Special Case 2: En Passant (Pawn moves diagonally to empty square)
+	var is_diagonal = from_sq[0] != to_sq[0]
+	var dest_empty = not spawned_pieces.has(to_sq)
+	if is_diagonal and dest_empty:
+		var cap_sq = to_sq[0] + from_sq[1]
+		if spawned_pieces.has(cap_sq):
+			var captured_pawn = spawned_pieces[cap_sq]
+			spawned_pieces.erase(cap_sq)
+			var cap_tween = create_tween().set_parallel(true)
+			cap_tween.tween_property(captured_pawn, "scale", Vector3.ZERO, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			cap_tween.tween_property(captured_pawn, "position:y", -0.5, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+			cap_tween.chain().tween_callback(captured_pawn.queue_free)
+
 	spawned_pieces.erase(from_sq)
 	
 	var is_capture = spawned_pieces.has(to_sq)
@@ -338,16 +388,18 @@ func move_piece_animated(from_sq: String, to_sq: String):
 		cap_tween.chain().tween_callback(captured.queue_free)
 		
 	spawned_pieces[to_sq] = piece
-	var target_pos = square_to_world(to_sq)
-	target_pos.y = piece.position.y
 	
-	# Smooth arced movement
-	var mid_pos = (piece.position + target_pos) / 2.0
-	mid_pos.y += 0.8 # lift height
-	
-	var tween = create_tween()
-	tween.tween_property(piece, "position", mid_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(piece, "position", target_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Check for Promotion on arrival (piece is now Queen in engine)
+	var is_promo = (to_sq[1] == "8" or to_sq[1] == "1") and engine.get_piece_at(to_sq) / 2 == 4
+	if is_promo:
+		_animate_piece_arc(piece, square_to_world(to_sq), func():
+			if is_instance_valid(piece):
+				piece.queue_free()
+				spawned_pieces.erase(to_sq)
+				_spawn_piece(to_sq, engine.get_piece_at(to_sq))
+		)
+	else:
+		_animate_piece_arc(piece, square_to_world(to_sq))
 
 func highlight_squares(squares: PackedStringArray):
 	clear_highlights()

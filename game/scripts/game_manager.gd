@@ -76,7 +76,7 @@ func _on_move_made(src: String, dst: String, result: int):
 	
 	if result == 1: # CHECK
 		check_detected.emit()
-	elif result == 8: # CHECKMATE
+	elif result == 8 or result >= 12: # CHECKMATE or DRAW
 		game_over.emit(result)
 		return
 		
