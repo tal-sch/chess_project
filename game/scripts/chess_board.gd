@@ -481,12 +481,9 @@ func highlight_squares(squares: PackedStringArray):
 		var pos = square_to_world(sq)
 		pos.y = 0.04 # Slightly above the board surface
 		highlight.position = pos
-		highlight.scale = Vector3.ZERO
+		highlight.scale = Vector3.ONE
 		add_child(highlight)
 		active_highlights.append(highlight)
-		
-		var t = create_tween()
-		t.tween_property(highlight, "scale", Vector3.ONE, 0.1).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
 		
 		var pulse_t = create_tween().set_loops()
 		pulse_t.tween_property(highlight, "scale", Vector3(1.05, 1.05, 1.05), 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
