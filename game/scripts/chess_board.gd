@@ -153,9 +153,9 @@ func pickup_piece(square: String):
 	currently_lifted_sq = square
 
 func put_down_piece(square: String):
-	if not spawned_pieces.has(square): return
 	if currently_lifted_sq == square:
 		currently_lifted_sq = ""
+	if not spawned_pieces.has(square): return
 	var piece = spawned_pieces[square]
 	var base_scale = piece.get_meta("base_scale") if piece.has_meta("base_scale") else piece.scale
 	var base_y = (PIECE_SCALES[engine.get_piece_at(square)/2].y * GLOBAL_PIECE_SCALE) / 2.0
@@ -362,7 +362,11 @@ func _apply_material_to_meshes(node: Node, mat: Material):
 		_apply_material_to_meshes(child, mat)
 
 func _animate_piece_arc(piece: Node3D, target_pos: Vector3, on_complete: Callable = Callable(), capture_target: Node3D = null):
-	target_pos.y = piece.position.y
+	var type = 0
+	if piece.has_meta("piece_code"):
+		type = piece.get_meta("piece_code") / 2
+	target_pos.y = (PIECE_SCALES[type].y * GLOBAL_PIECE_SCALE) / 2.0
+	
 	var mid_pos = (piece.position + target_pos) / 2.0
 	mid_pos.y += 0.8 # lift height
 	
