@@ -9,10 +9,12 @@ func _ready():
 	bg.color = Color(0, 0, 0, 0.4)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+	bg_rect = bg
 
 	var center = CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
+	center_container = center
 
 	var panel = PanelContainer.new()
 	panel.custom_minimum_size = Vector2(420, 480)
@@ -114,22 +116,50 @@ func _ready():
 	quit_margin.add_child(quit_btn)
 	main_buttons_vbox.add_child(quit_margin)
 	
-	# Fade in animation
-	modulate.a = 0.0
-	var fade_tween = create_tween()
-	fade_tween.tween_property(self, "modulate:a", 1.0, 0.5)
+	animate_in()
 
 var pending_mode: int = 0
 var difficulty_vbox: VBoxContainer
 var main_buttons_vbox: VBoxContainer
+var bg_rect: ColorRect
+var center_container: CenterContainer
+
+func animate_in():
+	if not is_inside_tree(): return
+	
+	if bg_rect:
+		bg_rect.modulate.a = 0.0
+		var bg_t = create_tween()
+		bg_t.tween_property(bg_rect, "modulate:a", 1.0, 0.4)
+	
+	if center_container:
+		center_container.visible = false
+		UIFX.pop_in(center_container)
+	
+	if main_buttons_vbox:
+		var delay = 0.15
+		for btn_margin in main_buttons_vbox.get_children():
+			btn_margin.visible = false
+			UIFX.fade_slide_in(btn_margin, Vector2(0, 30), delay)
+			delay += 0.06
 
 func _show_difficulty():
 	main_buttons_vbox.visible = false
 	difficulty_vbox.visible = true
+	var delay = 0.0
+	for child in difficulty_vbox.get_children():
+		child.visible = false
+		UIFX.fade_slide_in(child, Vector2(30, 0), delay)
+		delay += 0.05
 
 func _hide_difficulty():
 	difficulty_vbox.visible = false
 	main_buttons_vbox.visible = true
+	var delay = 0.0
+	for child in main_buttons_vbox.get_children():
+		child.visible = false
+		UIFX.fade_slide_in(child, Vector2(-30, 0), delay)
+		delay += 0.05
 
 func _add_menu_button(parent, text, callback: Callable):
 	var btn = Button.new()

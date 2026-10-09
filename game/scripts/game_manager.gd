@@ -17,16 +17,33 @@ var play_mode: int = 0 # 0=PvP, 1=Easy, 3=Medium, 5=Hard
 var bot_color: int = 0 # 0=Black
 var player_color: int = 1 # 1=White
 
+var fade_rect: ColorRect
+
 func _ready():
 	engine.move_made.connect(_on_move_made)
 	engine.game_reset.connect(_on_game_reset)
 	engine.new_game() # Populate pieces for the background
+	
+	var canvas = CanvasLayer.new()
+	canvas.layer = 100
+	fade_rect = ColorRect.new()
+	fade_rect.color = Color.BLACK
+	fade_rect.modulate.a = 0.0
+	fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	fade_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(fade_rect)
+	add_child(canvas)
+	
 	game_scene.visible = true
 	game_hud.visible = false
 	main_menu.visible = true
 
 func request_game_start(mode: int):
-	main_menu.visible = false
+	UIFX.pop_out(main_menu, 0.0)
+	var t = create_tween()
+	t.tween_property(fade_rect, "modulate:a", 1.0, 0.3)
+	await t.finished
+	
 	game_scene.visible = true
 	game_hud.visible = true
 	
@@ -34,6 +51,9 @@ func request_game_start(mode: int):
 		game_hud.show_color_selection(mode)
 	else:
 		start_new_game(mode, 1)
+		
+	var out_t = create_tween()
+	out_t.tween_property(fade_rect, "modulate:a", 0.0, 0.3)
 
 func start_new_game(mode: int = 0, p_color: int = 1):
 	play_mode = mode

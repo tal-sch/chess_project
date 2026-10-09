@@ -244,10 +244,8 @@ func _setup_color_selection_panel():
 
 func show_color_selection(mode: int):
 	pending_game_mode = mode
-	color_selection_overlay.modulate.a = 0.0
-	color_selection_overlay.visible = true
-	var tween = create_tween()
-	tween.tween_property(color_selection_overlay, "modulate:a", 1.0, 0.3)
+	color_selection_overlay.visible = false
+	UIFX.pop_in(color_selection_overlay)
 	
 	# Hide normal HUD momentarily
 	var main_hbox = get_node_or_null("MainHBox")
@@ -406,10 +404,8 @@ func _on_game_over(result: int):
 		game_over_title.text = "GAME OVER"
 		game_over_subtitle.text = "Game concluded"
 	
-	game_over_overlay.modulate.a = 0.0
-	game_over_overlay.visible = true
-	var tween = create_tween()
-	tween.tween_property(game_over_overlay, "modulate:a", 1.0, 0.4)
+	game_over_overlay.visible = false
+	UIFX.pop_in(game_over_overlay)
 
 func _on_newgame_pressed():
 	if game_over_overlay:
@@ -436,16 +432,28 @@ func _on_main_menu_pressed():
 	if main_hbox:
 		var alpha_tween = create_tween()
 		alpha_tween.tween_property(main_hbox, "modulate:a", 0.0, 0.2)
-		alpha_tween.tween_callback(func(): 
-			self.visible = false
-			game_manager.play_mode = 0
-			game_manager.main_menu.visible = true
-			game_manager.main_menu.modulate.a = 0.0
-			var menu_tween = create_tween()
-			menu_tween.tween_property(game_manager.main_menu, "modulate:a", 1.0, 0.4)
-			game_manager.engine.new_game()
-			game_manager.board.refresh_board()
-		)
+		
+	# Full screen fade
+	if game_manager.fade_rect:
+		var ft = create_tween()
+		ft.tween_property(game_manager.fade_rect, "modulate:a", 1.0, 0.3)
+		await ft.finished
+		
+		self.visible = false
+		game_manager.play_mode = 0
+		game_manager.main_menu.visible = true
+		
+		# Reset HUD
+		if main_hbox: main_hbox.modulate.a = 1.0
+		
+		# Start main menu pop in
+		game_manager.main_menu.animate_in()
+		
+		game_manager.engine.new_game()
+		game_manager.board.refresh_board()
+		
+		var out_t = create_tween()
+		out_t.tween_property(game_manager.fade_rect, "modulate:a", 0.0, 0.3)
 
 func add_captured_piece(piece_code: int):
 	captured_pieces.append(piece_code)
