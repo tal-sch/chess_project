@@ -168,6 +168,7 @@ func _ready():
 		game_manager.turn_changed.connect(_on_turn_changed)
 		game_manager.check_detected.connect(_on_check_detected)
 		game_manager.game_over.connect(_on_game_over)
+		game_manager.piece_captured.connect(add_captured_piece)
 		
 	var engine = get_node_or_null("/root/ChessEngine")
 	if engine:
@@ -455,7 +456,7 @@ func _on_main_menu_pressed():
 		var out_t = create_tween()
 		out_t.tween_property(game_manager.fade_rect, "modulate:a", 0.0, 0.3)
 
-func add_captured_piece(piece_code: int):
+func add_captured_piece(piece_code: int, _side: int = 0):
 	captured_pieces.append(piece_code)
 	_update_captured_display()
 

@@ -343,6 +343,7 @@ func _spawn_piece(square: String, piece_code: int):
 		piece_instance.position = base_pos
 		piece_instance.scale = PIECE_SCALES[type] * GLOBAL_PIECE_SCALE
 		piece_instance.set_meta("base_scale", piece_instance.scale)
+		piece_instance.set_meta("piece_code", piece_code)
 		
 		# Rotate black pieces to face white
 		if color == 0:
@@ -430,6 +431,11 @@ func move_piece_animated(from_sq: String, to_sq: String):
 		var cap_sq = to_sq[0] + from_sq[1]
 		if spawned_pieces.has(cap_sq):
 			var captured_pawn = spawned_pieces[cap_sq]
+			
+			if captured_pawn.has_meta("piece_code"):
+				var code = captured_pawn.get_meta("piece_code")
+				get_node("/root/Main/GameManager").piece_captured.emit(code, code % 2)
+				
 			spawned_pieces.erase(cap_sq)
 			var cap_tween = create_tween().set_parallel(true)
 			cap_tween.tween_property(captured_pawn, "scale", Vector3.ZERO, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
@@ -442,6 +448,10 @@ func move_piece_animated(from_sq: String, to_sq: String):
 	var captured = null
 	if is_capture:
 		captured = spawned_pieces[to_sq]
+		
+		if captured.has_meta("piece_code"):
+			var code = captured.get_meta("piece_code")
+			get_node("/root/Main/GameManager").piece_captured.emit(code, code % 2)
 		
 		# Shake the captured piece before it shrinks
 		UIFX.shake(captured)
