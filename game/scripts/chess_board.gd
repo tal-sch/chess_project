@@ -366,7 +366,8 @@ func move_piece_animated(from_sq: String, to_sq: String):
 	# Special Case 2: En Passant (Pawn moves diagonally to empty square)
 	var is_diagonal = from_sq[0] != to_sq[0]
 	var dest_empty = not spawned_pieces.has(to_sq)
-	if is_diagonal and dest_empty:
+	var moving_piece_type = engine.get_piece_at(to_sq) / 2
+	if is_diagonal and dest_empty and moving_piece_type == 0:
 		var cap_sq = to_sq[0] + from_sq[1]
 		if spawned_pieces.has(cap_sq):
 			var captured_pawn = spawned_pieces[cap_sq]
