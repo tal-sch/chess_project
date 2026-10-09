@@ -338,8 +338,9 @@ func move_piece_animated(from_sq: String, to_sq: String):
 	var piece = spawned_pieces[from_sq]
 
 	# Special Case 1: Castling (King moves to corner rook square)
-	var is_castling = (from_sq == "e1" and (to_sq == "a1" or to_sq == "h1")) or \
-	                  (from_sq == "e8" and (to_sq == "a8" or to_sq == "h8"))
+	var is_king = (engine.get_piece_at(to_sq) / 2) == 5
+	var is_castling = is_king and ((from_sq == "e1" and (to_sq == "a1" or to_sq == "h1")) or \
+	                  (from_sq == "e8" and (to_sq == "a8" or to_sq == "h8")))
 	if is_castling and spawned_pieces.has(to_sq):
 		var king = piece
 		var rook = spawned_pieces[to_sq]
