@@ -127,6 +127,7 @@ func _ready():
 	quit_margin.add_child(quit_btn)
 	main_buttons_vbox.add_child(quit_margin)
 	
+	self.modulate.a = 0.0
 	animate_in()
 
 var pending_mode: int = 0
@@ -138,19 +139,22 @@ var center_container: CenterContainer
 func animate_in():
 	if not is_inside_tree(): return
 	
+	# Wait for layout to resolve before reading button positions
+	await get_tree().process_frame
+	
+	self.modulate.a = 1.0
+	
 	if bg_rect:
 		bg_rect.modulate.a = 0.0
 		var bg_t = create_tween()
 		bg_t.tween_property(bg_rect, "modulate:a", 1.0, 0.4)
 	
 	if center_container:
-		center_container.visible = false
 		UIFX.pop_in(center_container)
 	
 	if main_buttons_vbox:
 		var delay = 0.15
 		for btn_margin in main_buttons_vbox.get_children():
-			btn_margin.visible = false
 			UIFX.fade_slide_in(btn_margin, Vector2(0, 30), delay)
 			delay += 0.06
 
@@ -159,7 +163,6 @@ func _show_difficulty():
 	difficulty_vbox.visible = true
 	var delay = 0.0
 	for child in difficulty_vbox.get_children():
-		child.visible = false
 		UIFX.fade_slide_in(child, Vector2(30, 0), delay)
 		delay += 0.05
 
@@ -168,7 +171,6 @@ func _hide_difficulty():
 	main_buttons_vbox.visible = true
 	var delay = 0.0
 	for child in main_buttons_vbox.get_children():
-		child.visible = false
 		UIFX.fade_slide_in(child, Vector2(-30, 0), delay)
 		delay += 0.05
 
