@@ -143,6 +143,8 @@ var center_container: CenterContainer
 func animate_in():
 	if not is_inside_tree(): return
 	
+	self.scale = Vector2.ONE
+	
 	# Wait for layout to resolve before reading button positions
 	await get_tree().process_frame
 	
