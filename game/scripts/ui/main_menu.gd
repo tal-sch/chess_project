@@ -106,15 +106,19 @@ func _ready():
 	difficulty_vbox.add_child(back_margin)
 	
 	var options_margin = MarginContainer.new()
-	options_margin.add_theme_constant_override("margin_left", 48)
-	options_margin.add_theme_constant_override("margin_right", 48)
+	options_margin.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	options_margin.add_theme_constant_override("margin_left", 24)
+	options_margin.add_theme_constant_override("margin_top", 24)
+	
 	var reduce_motion_btn = CheckButton.new()
 	reduce_motion_btn.text = "REDUCE MOTION"
-	reduce_motion_btn.add_theme_font_size_override("font_size", 12)
+	reduce_motion_btn.add_theme_font_size_override("font_size", 14)
+	reduce_motion_btn.add_theme_color_override("font_color", Color(0.7, 0.7, 0.75))
 	reduce_motion_btn.button_pressed = UIFX.reduce_motion
 	reduce_motion_btn.toggled.connect(func(toggled: bool): UIFX.reduce_motion = toggled)
+	
 	options_margin.add_child(reduce_motion_btn)
-	main_buttons_vbox.add_child(options_margin)
+	add_child(options_margin)
 	
 	var quit_btn = Button.new()
 	quit_btn.text = "EXIT"
