@@ -165,6 +165,11 @@ func animate_in():
 func _show_difficulty():
 	main_buttons_vbox.visible = false
 	difficulty_vbox.visible = true
+	for child in difficulty_vbox.get_children():
+		child.modulate.a = 0.0
+		
+	await get_tree().process_frame
+	
 	var delay = 0.0
 	for child in difficulty_vbox.get_children():
 		UIFX.fade_slide_in(child, Vector2(30, 0), delay)
@@ -173,6 +178,11 @@ func _show_difficulty():
 func _hide_difficulty():
 	difficulty_vbox.visible = false
 	main_buttons_vbox.visible = true
+	for child in main_buttons_vbox.get_children():
+		child.modulate.a = 0.0
+		
+	await get_tree().process_frame
+	
 	var delay = 0.0
 	for child in main_buttons_vbox.get_children():
 		UIFX.fade_slide_in(child, Vector2(-30, 0), delay)
