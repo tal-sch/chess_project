@@ -93,8 +93,11 @@ func _on_move_made(src: String, dst: String, result: int):
 	# Show last move highlight on the board
 	if board and board.has_method("show_last_move"):
 		board.show_last_move(src, dst)
+		if board.has_method("clear_check"): board.clear_check()
 	
 	if result == 1: # CHECK
+		if board and board.has_method("show_check"):
+			board.show_check(engine.get_side_to_move())
 		check_detected.emit()
 	elif result == 8 or result >= 12: # CHECKMATE or DRAW
 		game_over.emit(result)

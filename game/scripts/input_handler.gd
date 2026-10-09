@@ -147,6 +147,9 @@ func _handle_square_click(square: String):
 				board.highlight_squares(legal_moves)
 				board.show_selected_square(square)
 			else:
+				# Illegal move / click elsewhere
+				if board.spawned_pieces.has(selected_square):
+					UIFX.shake(board.spawned_pieces[selected_square])
 				board.clear_highlights()
 				state = State.IDLE
 				selected_square = ""

@@ -124,14 +124,52 @@ func update_hover(square: String):
 		pos.y = 0.04
 		hover_highlight.position = pos
 
+var currently_lifted_sq: String = ""
+
 func show_selected_square(square: String):
 	selected_highlight.visible = true
 	var pos = square_to_world(square)
 	pos.y = 0.04
 	selected_highlight.position = pos
+	
+	selected_highlight.scale = Vector3(0.1, 0.1, 0.1)
+	var t = create_tween()
+	t.tween_property(selected_highlight, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+	
+	if currently_lifted_sq != "":
+		put_down_piece(currently_lifted_sq)
+	pickup_piece(square)
+
+func pickup_piece(square: String):
+	if not spawned_pieces.has(square): return
+	var piece = spawned_pieces[square]
+	var base_scale = piece.get_meta("base_scale") if piece.has_meta("base_scale") else piece.scale
+	
+	var t = UIFX._get_tween(piece, "ui_tween_pickup")
+	if not t: return
+	t.set_parallel(true)
+	t.tween_property(piece, "position:y", 0.4, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(piece, "scale", base_scale * 1.15, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	currently_lifted_sq = square
+
+func put_down_piece(square: String):
+	if not spawned_pieces.has(square): return
+	if currently_lifted_sq == square:
+		currently_lifted_sq = ""
+	var piece = spawned_pieces[square]
+	var base_scale = piece.get_meta("base_scale") if piece.has_meta("base_scale") else piece.scale
+	var base_y = (PIECE_SCALES[engine.get_piece_at(square)/2].y * GLOBAL_PIECE_SCALE) / 2.0
+	
+	var t = UIFX._get_tween(piece, "ui_tween_pickup")
+	if not t: return
+	t.set_parallel(true)
+	t.tween_property(piece, "position:y", base_y, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	t.tween_property(piece, "scale", base_scale, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 func clear_selected():
 	selected_highlight.visible = false
+	if currently_lifted_sq != "":
+		put_down_piece(currently_lifted_sq)
 
 func _load_piece_scenes():
 	var base_path = "res://assets/models/3D_Chess_Pieces_Pack/models/"
@@ -304,6 +342,7 @@ func _spawn_piece(square: String, piece_code: int):
 		base_pos.y += (PIECE_SCALES[type].y * GLOBAL_PIECE_SCALE) / 2.0
 		piece_instance.position = base_pos
 		piece_instance.scale = PIECE_SCALES[type] * GLOBAL_PIECE_SCALE
+		piece_instance.set_meta("base_scale", piece_instance.scale)
 		
 		# Rotate black pieces to face white
 		if color == 0:
@@ -321,15 +360,32 @@ func _apply_material_to_meshes(node: Node, mat: Material):
 	for child in node.get_children():
 		_apply_material_to_meshes(child, mat)
 
-func _animate_piece_arc(piece: Node3D, target_pos: Vector3, on_complete: Callable = Callable()):
+func _animate_piece_arc(piece: Node3D, target_pos: Vector3, on_complete: Callable = Callable(), capture_target: Node3D = null):
 	target_pos.y = piece.position.y
 	var mid_pos = (piece.position + target_pos) / 2.0
 	mid_pos.y += 0.8 # lift height
-	var tween = create_tween()
-	tween.tween_property(piece, "position", mid_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(piece, "position", target_pos, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	var base_scale = piece.get_meta("base_scale") if piece.has_meta("base_scale") else piece.scale
+	
+	var t = UIFX._get_tween(piece, "ui_tween_pos")
+	if not t: return
+	
+	t.tween_property(piece, "position", mid_pos, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	t.tween_property(piece, "position", target_pos, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	# Squash on landing
+	if not UIFX.reduce_motion:
+		var squash_scale = base_scale * Vector3(1.1, 0.85, 1.1)
+		t.tween_property(piece, "scale", squash_scale, 0.05 * UIFX.anim_speed).set_trans(Tween.TRANS_SINE)
+		t.tween_property(piece, "scale", base_scale, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+	
+		if capture_target:
+			# Small bounce on capture
+			t.parallel().tween_property(piece, "position:y", target_pos.y + 0.3, 0.1 * UIFX.anim_speed).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			t.chain().tween_property(piece, "position:y", target_pos.y, 0.15 * UIFX.anim_speed).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+
 	if on_complete.is_valid():
-		tween.chain().tween_callback(on_complete)
+		t.tween_callback(on_complete)
 
 func move_piece_animated(from_sq: String, to_sq: String):
 	if not spawned_pieces.has(from_sq):
@@ -383,9 +439,13 @@ func move_piece_animated(from_sq: String, to_sq: String):
 	spawned_pieces.erase(from_sq)
 	
 	var is_capture = spawned_pieces.has(to_sq)
+	var captured = null
 	if is_capture:
-		var captured = spawned_pieces[to_sq]
-		# Easing on capture: scale to zero while sinking
+		captured = spawned_pieces[to_sq]
+		
+		# Shake the captured piece before it shrinks
+		UIFX.shake(captured)
+		
 		var cap_tween = create_tween().set_parallel(true)
 		cap_tween.tween_property(captured, "scale", Vector3.ZERO, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 		cap_tween.tween_property(captured, "position:y", -0.5, 0.25).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
@@ -401,12 +461,13 @@ func move_piece_animated(from_sq: String, to_sq: String):
 				piece.queue_free()
 				spawned_pieces.erase(to_sq)
 				_spawn_piece(to_sq, engine.get_piece_at(to_sq))
-		)
+		, captured)
 	else:
-		_animate_piece_arc(piece, square_to_world(to_sq))
+		_animate_piece_arc(piece, square_to_world(to_sq), Callable(), captured)
 
 func highlight_squares(squares: PackedStringArray):
 	clear_highlights()
+	var delay = 0.0
 	for sq in squares:
 		var highlight = MeshInstance3D.new()
 		# Premium 3D ring instead of flat square
@@ -421,8 +482,20 @@ func highlight_squares(squares: PackedStringArray):
 		var pos = square_to_world(sq)
 		pos.y = 0.04 # Slightly above the board surface
 		highlight.position = pos
+		highlight.scale = Vector3.ZERO
 		add_child(highlight)
 		active_highlights.append(highlight)
+		
+		var t = create_tween()
+		if delay > 0:
+			t.tween_interval(delay)
+		t.tween_property(highlight, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+		
+		var pulse_t = create_tween().set_loops()
+		pulse_t.tween_property(highlight, "scale", Vector3(1.05, 1.05, 1.05), 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		pulse_t.tween_property(highlight, "scale", Vector3.ONE, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		
+		delay += 0.02
 
 func clear_highlights():
 	for h in active_highlights:
@@ -456,3 +529,46 @@ func clear_last_move():
 		if is_instance_valid(h):
 			h.queue_free()
 	last_move_highlights.clear()
+
+var check_highlight: MeshInstance3D
+
+func show_check(side: int):
+	# Shake board
+	UIFX.shake(self)
+	
+	# Find king
+	var king_code = 11 if side == 1 else 10 # 5 * 2 + side
+	var king_sq = ""
+	for sq in spawned_pieces:
+		if engine.get_piece_at(sq) == king_code:
+			king_sq = sq
+			break
+			
+	if king_sq == "": return
+	
+	if not check_highlight or not is_instance_valid(check_highlight):
+		check_highlight = MeshInstance3D.new()
+		var p = PlaneMesh.new()
+		p.size = Vector2(SQUARE_SIZE, SQUARE_SIZE)
+		check_highlight.mesh = p
+		var mat = StandardMaterial3D.new()
+		mat.albedo_color = Color(1, 0.1, 0.1, 0.8)
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.emission_enabled = true
+		mat.emission = Color(1, 0.1, 0.1, 1)
+		check_highlight.material_override = mat
+		add_child(check_highlight)
+	
+	check_highlight.position = square_to_world(king_sq)
+	check_highlight.position.y = 0.03
+	check_highlight.visible = true
+	
+	# Pulse it red
+	check_highlight.scale = Vector3(1.2, 1.2, 1.2)
+	check_highlight.transparency = 0.0
+	var t = create_tween()
+	t.tween_property(check_highlight, "scale", Vector3(1.0, 1.0, 1.0), 0.5).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+	
+func clear_check():
+	if check_highlight and is_instance_valid(check_highlight):
+		check_highlight.visible = false
