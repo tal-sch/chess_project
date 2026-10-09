@@ -467,7 +467,6 @@ func move_piece_animated(from_sq: String, to_sq: String):
 
 func highlight_squares(squares: PackedStringArray):
 	clear_highlights()
-	var delay = 0.0
 	for sq in squares:
 		var highlight = MeshInstance3D.new()
 		# Premium 3D ring instead of flat square
@@ -487,15 +486,11 @@ func highlight_squares(squares: PackedStringArray):
 		active_highlights.append(highlight)
 		
 		var t = create_tween()
-		if delay > 0:
-			t.tween_interval(delay)
-		t.tween_property(highlight, "scale", Vector3.ONE, 0.15).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
+		t.tween_property(highlight, "scale", Vector3.ONE, 0.05).set_trans(Tween.TRANS_SPRING).set_ease(Tween.EASE_OUT)
 		
 		var pulse_t = create_tween().set_loops()
 		pulse_t.tween_property(highlight, "scale", Vector3(1.05, 1.05, 1.05), 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		pulse_t.tween_property(highlight, "scale", Vector3.ONE, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-		
-		delay += 0.005
 
 func clear_highlights():
 	for h in active_highlights:
