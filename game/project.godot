@@ -22,6 +22,7 @@ config/features=PackedStringArray("4.7", "Forward Plus")
 
 ChessEngine="*res://scripts/chess_engine_wrapper.gd"
 UIFX="*res://scripts/ui/ui_fx.gd"
+ButtonFX="*res://scripts/ui/button_fx.gd"
 
 [display]
 
