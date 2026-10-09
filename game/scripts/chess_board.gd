@@ -338,22 +338,24 @@ func move_piece_animated(from_sq: String, to_sq: String):
 	var piece = spawned_pieces[from_sq]
 
 	# Special Case 1: Castling (King moves to corner rook square)
-	var is_king = (engine.get_piece_at(to_sq) / 2) == 5
-	var is_castling = is_king and ((from_sq == "e1" and (to_sq == "a1" or to_sq == "h1")) or \
-	                  (from_sq == "e8" and (to_sq == "a8" or to_sq == "h8")))
+	var is_castling = false
+	var king_dst = ""
+	var rook_dst = ""
+	
+	if from_sq == "e1":
+		if to_sq == "a1" and engine.get_piece_at("a1") == -1 and (engine.get_piece_at("c1") / 2) == 5:
+			is_castling = true; king_dst = "c1"; rook_dst = "d1"
+		elif to_sq == "h1" and engine.get_piece_at("h1") == -1 and (engine.get_piece_at("g1") / 2) == 5:
+			is_castling = true; king_dst = "g1"; rook_dst = "f1"
+	elif from_sq == "e8":
+		if to_sq == "a8" and engine.get_piece_at("a8") == -1 and (engine.get_piece_at("c8") / 2) == 5:
+			is_castling = true; king_dst = "c8"; rook_dst = "d8"
+		elif to_sq == "h8" and engine.get_piece_at("h8") == -1 and (engine.get_piece_at("g8") / 2) == 5:
+			is_castling = true; king_dst = "g8"; rook_dst = "f8"
+
 	if is_castling and spawned_pieces.has(to_sq):
 		var king = piece
 		var rook = spawned_pieces[to_sq]
-		var king_dst = ""
-		var rook_dst = ""
-		if to_sq == "a1":
-			king_dst = "c1"; rook_dst = "d1"
-		elif to_sq == "h1":
-			king_dst = "g1"; rook_dst = "f1"
-		elif to_sq == "a8":
-			king_dst = "c8"; rook_dst = "d8"
-		elif to_sq == "h8":
-			king_dst = "g8"; rook_dst = "f8"
 
 		spawned_pieces.erase(from_sq)
 		spawned_pieces.erase(to_sq)
